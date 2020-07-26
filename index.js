@@ -3,13 +3,19 @@ const inquirer = require("inquirer");
 const table = require("console.table");
 
 // Connection to Database
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  database: 'test'
+var connection = mysql.createConnection({
+  host: "localhost",
+  // MySQL username and password
+  user: "root",
+  password: "763M@tt8952",
+  database: "employeeDB"
 });
 
-Introduction();
+connection.connect(function (err) {
+  if (err) throw err;
+  Introduction();
+});
+
 // Introduction
 function Introduction() {
   inquirer
