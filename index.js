@@ -5,6 +5,7 @@ const table = require("console.table");
 // Connection to Database
 var connection = mysql.createConnection({
   host: "localhost",
+  // port: 3306,
   // MySQL username and password
   user: "root",
   password: "763M@tt8952",
@@ -30,7 +31,7 @@ function Introduction() {
           "View Employees by Role",
           "Add Employee",
           "Update Employee's Role",
-          "Finish Employee Tracker"
+          "Quit Employee Tracker"
         ]
     })
     .then(function (answer) {
@@ -49,8 +50,8 @@ function Introduction() {
       else if (answer.begin === "Update Employee's Role") {
         updateEmployeeRole();
       }
-      else if (answer.begin === "Finish Employee Tracker") {
-        console.log("---- All Finished ----");
+      else if (answer.begin === "Quit Employee Tracker") {
+        console.log("---- Goodbye ----");
       }
       else {
         connection.end();
@@ -61,29 +62,31 @@ function Introduction() {
 // View All Employees
 function viewAllEmployees() {
   connection.query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, roles.title, roles.salary, department.department FROM ((employee INNER JOIN roles ON employee.role_id = roles.id) INNER JOIN department ON roles.department_id = department.id)",
-  function (err, result) {
-    if (err) throw err;
-    console.table(result);
-    Introduction();
-  });
+    function (err, result) {
+      if (err) throw err;
+      console.table(result);
+      Introduction();
+    });
 }
 
 // View By Department
 function viewByDepartment() {
   inquirer.prompt({
-    name: "department",
-    type: "list",
-    message: "Which department would you like to see employees for?",
-    choices: ["Fundraising", "Development", "Advising", "Marketing"]
-  })
-
-  .then(function (answer) {
-    if (answer.department === "Fundraising" || "Development" || "Advising" || "Marketing") {
-      connection.query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, roles.title, roles.salary, department.department FROM ((employee INNER JOIN roles ON employee.role_id = roles.id) INNER JOIN department ON roles.department_id = department.id) WHERE department = ?", [answer.department], function (err, result) {
-        if (err) throw err;
-        console.table(result);
-        Introduction();
-      });
+      name: "department",
+      type: "list",
+      message: "Which department would you like to see employees for?",
+      choices: ["Fundraising", "Development", "Advising", "Marketing"]
+    })
+    .then(function (answer) {
+      if (answer.department === "Fundraising" || "Development" || "Advising" || "Marketing") {
+        connection.query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, roles.title, roles.salary, department.department FROM ((employee INNER JOIN roles ON employee.role_id = roles.id) INNER JOIN department ON roles.department_id = department.id) WHERE department = ?",
+        [answer.department],
+        function (err, result) {
+          if (err) throw err;
+          console.table(result);
+          Introduction();
+        }
+      );
     }
   });
 }
@@ -105,15 +108,15 @@ function viewByRole() {
         "Marketing Manager",
         "Associate Marketing Manager"
       ]
-  })
-
-  .then(function (answer) {
-    if (answer.role === "Fundraising Manager" || "Fundraising Assistant" || "Development Manager" || "Associate Development Manager" || "Lead Advisor" || "Associate Advisor" || "Marketing Manager" || "Associate Marketing Manager") {
-      connection.query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, roles.title, roles.salary, department.department FROM ((employee INNER JOIN roles ON employee.role_id = roles.id) INNER JOIN department ON roles.department_id = department.id) WHERE title = ?", [answer.role], function (err, result) {
+    })
+    .then(function (answer) {
+      if (answer.role === "Fundraising Manager" || "Fundraising Assistant" || "Development Manager" || "Associate Development Manager" || "Lead Advisor" || "Associate Advisor" || "Marketing Manager" || "Associate Marketing Manager") {
+        connection.query("SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, roles.title, roles.salary, department.department FROM ((employee INNER JOIN roles ON employee.role_id = roles.id) INNER JOIN department ON roles.department_id = department.id) WHERE title = ?", [answer.role], function (err, result) {
         if (err) throw err;
         console.table(result);
         Introduction();
-      });
+        }
+      );
     }
   });
 }
@@ -162,10 +165,9 @@ function addEmployee() {
       name: "manager",
       type: "list",
       message: "Who is your employees manager?",
-      choices: ["Kathy", "Erin", "Paul", "Aubrey", "None"]
+      choices: ["Kathy", "Erin", "Paul", "Steve", "None"]
     }
   ])
-
   .then(function (answer) {
     var dept_id;
     if (answer.dept === "Fundraising") {
@@ -244,7 +246,8 @@ function addEmployee() {
       },
       function (err, result) {
         if (err) throw err;
-        console.log("---- New Employee Added ----");
+
+        console.log("=== New Employee Added ===");
         Introduction();
       }
     );
@@ -259,7 +262,7 @@ function updateEmployeeRole() {
 
     for (var i = 0; i < result.length; i++) {
       var choices = result[i].id;
-      choiceArray.push(choices);        
+      choiceArray.push(choices);
     }
 
     questions = [
@@ -288,45 +291,45 @@ function updateEmployeeRole() {
     ]
 
     inquirer.prompt(questions)
-    .then(function (answer) {
-      console.log(answer.employee);
-      console.log(answer.newTitle)
+      .then(function (answer) {
+        console.log(answer.employee);
+        console.log(answer.newTitle)
 
-      let role_id = 0;
+        let role_id = 0;                
 
-      if (answer.newTitle == "Fundraising Manager") {
-        role_id = 1;
-      }
-      else if (answer.newTitle == "Fundraising Assistant") {
-        role_id = 2;
-      }
-      else if (answer.newTitle == "Development Manager") {
-        role_id = 3;
-      }
-      else if (answer.newTitle == "Associate Development Manager") {
-        role_id = 4;
-      }
-      else if (answer.newTitle == "Lead Advisor") {
-        role_id = 5;
-      }
-      else if (answer.newTitle == "Associate Advisor") {
-        role_id = 6;
-      }
-      else if (answer.newTitle == "Marketing Manager") {
-        role_id = 6;
-      }
-      else if (answer.newTitle == "Associate Marketing Manager") {
-        role_id = 6;
-      }
-
-      connection.query("UPDATE employee SET role_id = ? WHERE id=?",
-        [role_id, answer.employee],
-        function (err, result) {
-          if (err) throw err;
-          console.log("---- Updated Employee ----");
-          Introduction();
+        if (answer.newTitle == "Fundraising Manager") {
+          role_id = 1;
         }
-      )
-    });
+        else if (answer.newTitle == "Fundraising Assistant") {
+          role_id = 2;
+        }
+        else if (answer.newTitle == "Development Manager") {
+          role_id = 3;
+        }
+        else if (answer.newTitle == "Associate Development Manager") {
+          role_id = 4;
+        }
+        else if (answer.newTitle == "Lead Advisor") {
+          role_id = 5;
+        }
+        else if (answer.newTitle == "Associate Advisor") {
+          role_id = 6;
+        }
+        else if (answer.newTitle == "Marketing Manager") {
+          role_id = 7;
+        }
+        else if (answer.newTitle == "Associate Marketing Manager") {
+          role_id = 8;
+        }
+
+        connection.query("UPDATE employee SET role_id = ? WHERE id=?",
+          [role_id, answer.employee],
+          function (err, result) {
+            if (err) throw err;
+            console.log("---- Updated Employee ----");
+            Introduction();
+          }
+        )
+      });
   })
 }
